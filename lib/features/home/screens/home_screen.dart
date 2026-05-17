@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../profile/bloc/profile_bloc.dart';
+import '../../profile/bloc/profile_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -9,21 +12,19 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Simüle edilmiş kullanıcı durumu
-  final bool _isNewUser = false; 
-
-  // Gereksinim dokümanına uygun Mock Yapay Zeka Öneri Listesi
-  // NOT: Tip güvenliği ve const hatası almamak için renkleri burada doğrudan atıyoruz
-  final List<Map<String, dynamic>> _aiSuggestions = [
+  // Mock Geniş Yemek Havuzu
+  final List<Map<String, dynamic>> _foodPool = [
     {
       'id': 'p1',
       'title': 'Fit Tavuk Bowl',
       'restaurant': 'Sağlıklı Mutfak',
       'calorie': 520,
       'minPrice': 189.0,
-      'description': 'Son tercihlerine göre protein ağırlıklı öneri.',
+      'description': 'Protein ağırlıklı yapay zeka akşam menüsü önerisi.',
       'tag': 'AI Öneri',
       'tagColor': AppColors.primaryOrange,
+      'isVegan': false,
+      'allergens': ['Gluten'],
     },
     {
       'id': 'p2',
@@ -31,20 +32,25 @@ class _HomeScreenState extends State<HomeScreen> {
       'restaurant': 'Asia Box',
       'calorie': 430,
       'minPrice': 164.0,
-      'description': '90 günlük ortalamaya göre fiyat avantajı var.',
+      'description':
+          'Mutfak geçmişinize göre fiyat avantajlı vegan akşam yemeği.',
       'tag': 'Gerçek İndirim',
       'tagColor': AppColors.healthGreen,
+      'isVegan': true,
+      'allergens': ['Soya', 'Gluten'],
     },
     {
       'id': 'p3',
-      'title': 'Mercimek Çorbası & Gözleme',
+      'title': 'Ezogelin Çorbası & Mevsim Salata',
       'restaurant': 'Yöresel Ev Yemekleri',
-      'calorie': 610,
-      'minPrice': 112.0,
-      'description': 'Öğle saati için bütçe ve kalori dostu geleneksel menü.',
-      'tag': 'Partnerde Var',
+      'calorie': 310,
+      'minPrice': 95.0,
+      'description': 'Hafif ve bütçe dostu, tamamen bitkisel menü.',
+      'tag': 'Bütçe Dostu',
       'tagColor': AppColors.partnerBlue,
-    }
+      'isVegan': true,
+      'allergens': [],
+    },
   ];
 
   @override
@@ -62,121 +68,113 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         backgroundColor: AppColors.surfaceLight,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.black87),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.favorite_border, color: Colors.black87),
-            onPressed: () {},
-          ),
-        ],
       ),
-      body: _isNewUser ? _buildColdStartBody() : _buildNormalBody(),
-    );
-  }
+      body: BlocBuilder<ProfileBloc, ProfileState>(
+        builder: (context, state) {
+          // 1. DURUM: Loading
+          if (state is ProfileLoadingState) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primaryOrange),
+            );
+          }
 
-  // 1. SENARYO: NORMAL AKIŞ
-  Widget _buildNormalBody() {
-    return ListView(
-      padding: const EdgeInsets.all(16.0),
-      children: [
-        const Text(
-          'Bugün ne yesem?',
-          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.black87),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Damak tadına, saatine ve hedeflerine göre öneriler',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
-        ),
-        const SizedBox(height: 20),
-        
-        // Öneri Kartları Listesi - UYARI DÜZELTİLDİ: .toList() kaldırıldı
-        ..._aiSuggestions.map((item) => _buildSuggestionCard(item)),
-
-        const SizedBox(height: 16),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: ['Vegan', 'Düşük Kalori', 'Gerçek İndirim', 'Popüler']
-                .map((filter) => Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: Chip(
-                        label: Text(filter),
-                        backgroundColor: AppColors.surfaceLight,
-                        side: BorderSide(color: Colors.grey.shade300),
-                      ),
-                    ))
-                .toList(),
-          ),
-        )
-      ],
-    );
-  }
-
-  // 2. SENARYO: COLD START AKIŞI
-  Widget _buildColdStartBody() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(Icons.restaurant_rounded, size: 80, color: Colors.grey.shade400),
-          const SizedBox(height: 24),
-          const Text(
-            'Sizi Henüz Tanımıyoruz',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Kişisel geçmiş veriniz az olduğu için size özel yapay zeka önerileri üretemiyoruz. Lütfen diyet ve alerji tercihlerinizi seçin.',
-            style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.4),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryOrange,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          // 2. DURUM: Error (Hatalı text yapısı const kaldırılarak ve düzeltilerek çözüldü)
+          if (state is ProfileErrorState) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red, size: 48),
+                    SizedBox(height: 16),
+                    Text(
+                      'Profil bilgileri yüklenirken bir hata oluştu.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
               ),
-              onPressed: () {},
-              icon: const Icon(Icons.settings_accessibility, color: Colors.white),
-              label: const Text(
-                'Tercihlerimi Belirle',
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            );
+          }
+
+          // 3. DURUM: ProfileLoadedState
+          String userDiet = 'Standart';
+          List<String> userAllergies = [];
+
+          if (state is ProfileLoadedState) {
+            userDiet = state.currentDiet;
+            userAllergies = state.currentAllergies;
+          }
+
+          // YAPAY ZEKA FİLTRELEME ALGORİTMASI
+          List<Map<String, dynamic>> suggestedFoods = _foodPool.where((food) {
+            if (userDiet == 'Vegan' && !(food['isVegan'] as bool)) {
+              return false;
+            }
+            return true;
+          }).toList();
+
+          return ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              const Text(
+                'Merhaba 👋',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-          ),
-        ],
+              Text(
+                'Profiliniz: $userDiet Diyet | ${userAllergies.length} Aktif Alerjen',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              ...suggestedFoods.map(
+                (item) => _buildSuggestionCard(item, userAllergies),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  // YAPAY ZEKA ÖNERİ KART BİLEŞENİ
-  Widget _buildSuggestionCard(Map<String, dynamic> item) {
-    // Tip dönüşümünü güvenli bir şekilde yapıyoruz
-    final tagColor = item['tagColor'] as Color;
+  // Akıllı Yemek Kartı Bileşeni
+  Widget _buildSuggestionCard(
+    Map<String, dynamic> item,
+    List<String> userAllergies,
+  ) {
+    final Color tagColor = item['tagColor'] as Color;
+    final List<String> foodAllergens = List<String>.from(
+      item['allergens'] ?? [],
+    );
+
+    final bool hasAllergyConflict = foodAllergens.any(
+      (allergen) => userAllergies.contains(allergen),
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(16),
+        border: hasAllergyConflict
+            ? Border.all(color: Colors.red.shade400, width: 1.5)
+            : null,
         boxShadow: [
           BoxShadow(
-            // UYARI DÜZELTİLDİ: withOpacity yerine .withValues kullanıldı
             color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Padding(
@@ -184,15 +182,15 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Üst Etiket Satırı
+            // Üst Satır - Spacer kullanımı
             Row(
-              // HATA DÜZELTİLDİ: MainAxisAlignment.between -> spaceBetween yapıldı
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    // UYARI DÜZELTİLDİ: withOpacity yerine .withValues kullanıldı
                     color: tagColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -205,25 +203,31 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
+                const Spacer(), 
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    '${item['calorie']} kcal',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black54),
+                    '${item['calorie']} kcal', // ÇÖZÜM: $ işareti eklendi
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            
-            // Başlık ve Fiyat Satırı
+
+            // Başlık ve Fiyat Satırı - Spacer kullanımı
             Row(
-              // HATA DÜZELTİLDİ: MainAxisAlignment.between -> spaceBetween yapıldı
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
@@ -232,49 +236,112 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         item['title'].toString(),
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         item['restaurant'].toString(),
-                        style: const TextStyle(fontSize: 13, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
+                const Spacer(), 
                 Text(
-                  '${(item['minPrice'] as double).toStringAsFixed(0)} TL',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primaryOrange),
+                  '${(item['minPrice'] as double).toStringAsFixed(0)} TL', // ÇÖZÜM: $ işareti eklendi
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryOrange,
+                  ),
                 ),
               ],
             ),
+
+            // 🚨 KRİTİK ALERJİ ALARMI SÜZGECİ
+            if (hasAllergyConflict) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.red,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'DİKKAT: Bu yemek seçtiğiniz Alerjen maddeleri içerir!',
+                        style: TextStyle(
+                          color: Colors.red.shade900,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             const SizedBox(height: 12),
-            
-            // Açıklama Metni
             Text(
               item['description'].toString(),
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.3),
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey.shade600,
+                height: 1.3,
+              ),
             ),
             const Divider(height: 24, thickness: 0.5),
-            
-            // BEĞEN / BEĞENME BUTONLARI
+
+            // Geri Bildirim Butonları
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                const Spacer(), 
                 TextButton.icon(
                   onPressed: () {},
-                  icon: const Icon(Icons.thumb_down_alt_outlined, size: 18, color: Colors.grey),
-                  label: const Text('Beğenme', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  icon: const Icon(
+                    Icons.thumb_down_alt_outlined,
+                    size: 18,
+                    color: Colors.grey,
+                  ),
+                  label: const Text(
+                    'Beğenme',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 TextButton.icon(
                   onPressed: () {},
-                  icon: const Icon(Icons.thumb_up_alt_rounded, size: 18, color: AppColors.healthGreen),
-                  label: const Text('Beğen', style: TextStyle(color: AppColors.healthGreen, fontSize: 13)),
+                  icon: const Icon(
+                    Icons.thumb_up_alt_rounded,
+                    size: 18,
+                    color: AppColors.healthGreen,
+                  ),
+                  label: const Text(
+                    'Beğen',
+                    style: TextStyle(
+                      color: AppColors.healthGreen,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),
