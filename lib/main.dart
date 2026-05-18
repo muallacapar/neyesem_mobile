@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'core/navigation/main_layout.dart'; // Yeni yazdığımız iskeleti import ediyoruz
+import 'package:neyesem_mobile/features/auth/screens/login_screen.dart';
+// Yeni yazdığımız iskeleti import ediyoruz
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'NeYesem Mobil',
-      home: MainLayout(), // Uygulama artık MainLayout ile başlıyor
+      home: const LoginScreen(), // Uygulama artık buradan başlayacak
     );
   }
 }
